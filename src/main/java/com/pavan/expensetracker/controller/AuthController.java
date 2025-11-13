@@ -2,6 +2,7 @@ package com.pavan.expensetracker.controller;
 
 import com.pavan.expensetracker.dto.UserRequest;
 import com.pavan.expensetracker.dto.UserResponse;
+import com.pavan.expensetracker.exception.InvalidCredentialsException;
 import com.pavan.expensetracker.model.User;
 import com.pavan.expensetracker.service.UserService;
 import jakarta.validation.Valid;
@@ -52,7 +53,7 @@ public class AuthController {
                     .build();
             return ResponseEntity.ok(response);
         }
-        catch(IllegalArgumentException ex){
+        catch(InvalidCredentialsException ex){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("Message", ex.getMessage()));
         }

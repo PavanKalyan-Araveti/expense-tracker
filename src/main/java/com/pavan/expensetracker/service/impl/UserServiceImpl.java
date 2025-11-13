@@ -2,7 +2,6 @@ package com.pavan.expensetracker.service.impl;
 
 import com.pavan.expensetracker.exception.DuplicateUserException;
 import com.pavan.expensetracker.exception.InvalidCredentialsException;
-import com.pavan.expensetracker.exception.UserNotFoundException;
 import com.pavan.expensetracker.model.User;
 import com.pavan.expensetracker.repository.UserRepository;
 import com.pavan.expensetracker.service.UserService;
@@ -37,7 +36,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User login(String username, String rawPassword) {
         User user = userRepository.findByUserName(username)
-                .orElseThrow(() -> new UserNotFoundException("Invalid username or password"));
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid username or password"));
         boolean matches = passwordEncoder.matches(rawPassword, user.getPasswordHash());
         if(!matches) throw new InvalidCredentialsException("Invalid username or password");
         return user;
