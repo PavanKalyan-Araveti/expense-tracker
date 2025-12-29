@@ -1,9 +1,11 @@
 package com.pavan.expensetracker.controller;
 
+import com.pavan.expensetracker.dto.AuthResponse;
 import com.pavan.expensetracker.dto.UserRequest;
 import com.pavan.expensetracker.dto.UserResponse;
 import com.pavan.expensetracker.exception.InvalidCredentialsException;
 import com.pavan.expensetracker.model.User;
+import com.pavan.expensetracker.security.JwtUtil;
 import com.pavan.expensetracker.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -19,9 +21,11 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final UserService userService;
+    private final JwtUtil jwtUtil;
 
-    public AuthController(UserService userService){
+    public AuthController(UserService userService, JwtUtil jwtUtil){
         this.userService = userService;
+        this.jwtUtil = jwtUtil;
     }
 
     @PostMapping("/register")
@@ -46,12 +50,8 @@ public class AuthController {
                     userRequest.getUsername(),
                     userRequest.getPassword()
             );
-            UserResponse response = UserResponse.builder()
-                    .id(user.getId())
-                    .userName(user.getFullName())
-                    .fullName(user.getFullName())
-                    .build();
-            return ResponseEntity.ok(response);
+            String token = jwtUtil.generateToken(user.getUserName());
+            return ResponseEntity.ok(new AuthResponse(token));
         }
         catch(InvalidCredentialsException ex){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
