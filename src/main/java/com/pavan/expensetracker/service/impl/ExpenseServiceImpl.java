@@ -6,6 +6,8 @@ import com.pavan.expensetracker.exception.ResourceNotFoundException;
 import com.pavan.expensetracker.model.Expense;
 import com.pavan.expensetracker.repository.ExpenseRepository;
 import com.pavan.expensetracker.service.ExpenseService;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -47,12 +49,14 @@ public class ExpenseServiceImpl implements ExpenseService {
 
 
     @Override
+    @CacheEvict(value = { "allExpenses" }, allEntries = true)
     public ExpenseResponse createExpense(ExpenseRequest request) {
         Expense e = repo.save(fromRequest(request));
         return toResponse(e);
     }
 
     @Override
+    @Cacheable(value = "expenseById", key = "#id")
     public ExpenseResponse getExpenseById(Long id) {
         Expense e = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Expense not found with id: "+id));
@@ -60,6 +64,10 @@ public class ExpenseServiceImpl implements ExpenseService {
     }
 
     @Override
+    @Cacheable(
+            value = "allExpenses",
+            key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort"
+    )
     public Page<ExpenseResponse> getAllExpenses(Pageable pageable) {
         Page<Expense> page = repo.findAll(pageable);
         List<ExpenseResponse> response = page.getContent().stream().map(this::toResponse).collect(Collectors.toList());
@@ -91,6 +99,7 @@ public class ExpenseServiceImpl implements ExpenseService {
     }
 
     @Override
+    @CacheEvict(value = { "allExpenses", "expenseById" }, allEntries = true)
     public ExpenseResponse updateExpense(Long id, ExpenseRequest request) {
         Expense existing = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Expense not found with id: "+id));
@@ -104,6 +113,7 @@ public class ExpenseServiceImpl implements ExpenseService {
     }
 
     @Override
+    @CacheEvict(value = { "allExpenses", "expenseById" }, allEntries = true)
     public void deleteExpense(Long id) {
         Expense existing = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Expense not found with id: "+id));
